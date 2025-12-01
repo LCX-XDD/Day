@@ -15,4 +15,5 @@ document.addEventListener('DOMContentLoaded', function() {
   // 暴露全局变量供其他脚本使用
   window.AV = AV;
   window.currentUser = AV.User.current();
+
 });
