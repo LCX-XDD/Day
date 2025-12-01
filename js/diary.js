@@ -51,17 +51,20 @@ document.addEventListener('DOMContentLoaded', function() {
         await diary.save();
         alert('日记更新成功！');
       } else {
-        // 创建新日记
-        const Diary = AV.Object.extend('Diary');
-        const diary = new Diary();
-        
-        diary.set('title', title);
-        diary.set('content', content);
-        diary.set('tags', tags);
-        diary.set('mood', mood);
-        diary.set('weather', weather);
-        diary.set('isPublic', false);
-        diary.set('author', AV.User.current()); // 关联当前用户
+       // 创建新日记
+const Diary = AV.Object.extend('Diary');
+const diary = new Diary();
+
+// 显式创建 Pointer，指定 className 为 "User"（首字母大写，不带下划线）
+const authorPointer = AV.Object.createWithoutData('User', AV.User.current().id);
+
+diary.set('title', title);
+diary.set('content', content);
+diary.set('tags', tags);
+diary.set('mood', mood);
+diary.set('weather', weather);
+diary.set('isPublic', false);
+diary.set('author', authorPointer); // 使用显式创建的 Pointer
         
         await diary.save();
         alert('日记创建成功！');
@@ -311,4 +314,5 @@ document.addEventListener('DOMContentLoaded', function() {
 
   // 暴露函数供其他脚本使用
   window.loadDiaryList = loadDiaryList;
+
 });
