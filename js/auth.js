@@ -107,7 +107,6 @@ document.addEventListener('DOMContentLoaded', function() {
         user.setUsername(username);
         user.setPassword(password);
         if (email) user.setEmail(email);
-        user.set('isAdmin', false); // 默认不是管理员
         
         await user.signUp();
         alert('注册成功！请登录');
@@ -190,4 +189,5 @@ document.addEventListener('DOMContentLoaded', function() {
   // 暴露函数供其他脚本使用
   window.initAuthState = initAuthState;
   window.openLoginModal = openLoginModal;
+
 });
