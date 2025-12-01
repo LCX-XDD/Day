@@ -81,52 +81,53 @@ diaryForm.addEventListener('submit', async function(e) {
 });
 
   // 加载日记列表
-  async function loadDiaryList(filters = {}) {
-    try {
-      const user = AV.User.current();
-      if (!user) return;
+async function loadDiaryList(filters = {}) {
+  try {
+    const user = AV.User.current();
+    if (!user) return;
 
-      const query = new AV.Query('Diary');
-      
-      // 普通用户只能看到自己的日记
-      if (!user.get('isAdmin')) {
-        query.equalTo('author', user);
-      } else if (filters.userId) {
-        // 管理员可以筛选特定用户的日记
-        const userObj = AV.Object.createWithoutData('_User', filters.userId);
-        query.equalTo('author', userObj);
-      }
-      
-      // 搜索筛选
-      if (filters.search) {
-        const searchQuery = new AV.Query('Diary');
-        searchQuery.contains('title', filters.search);
-        
-        const contentQuery = new AV.Query('Diary');
-        contentQuery.contains('content', filters.search);
-        
-        query.or(searchQuery, contentQuery);
-      }
-      
-      // 标签筛选
-      if (filters.tag && filters.tag !== 'all') {
-        query.containsAll('tags', [filters.tag]);
-      }
-      
-      // 按创建时间降序排列
-      query.descending('createdAt');
-      
-      // 关联查询作者信息
-      query.include('author');
-      
-      const diaries = await query.find();
-      renderDiaryList(diaries);
-      updateTagFilters(diaries);
-    } catch (error) {
-      console.error('加载日记失败:', error);
-      alert('加载日记失败: ' + error.message);
+    const query = new AV.Query('Diary');
+    
+    // 普通用户只能看到自己的日记（修复 Pointer 匹配问题）
+    if (!user.get('isAdmin')) {
+      const selfPointer = AV.Object.createWithoutData('User', user.id);
+      query.equalTo('author', selfPointer); // 这里也使用 User 类型的 Pointer
+    } else if (filters.userId) {
+      // 管理员筛选特定用户的日记（同样修复）
+      const userObj = AV.Object.createWithoutData('User', filters.userId);
+      query.equalTo('author', userObj);
     }
+    
+    // 搜索筛选
+    if (filters.search) {
+      const searchQuery = new AV.Query('Diary');
+      searchQuery.contains('title', filters.search);
+      
+      const contentQuery = new AV.Query('Diary');
+      contentQuery.contains('content', filters.search);
+      
+      query.or(searchQuery, contentQuery);
+    }
+    
+    // 标签筛选
+    if (filters.tag && filters.tag !== 'all') {
+      query.containsAll('tags', [filters.tag]);
+    }
+    
+    // 按创建时间降序排列
+    query.descending('createdAt');
+    
+    // 关联查询作者信息（查询时用 "User" 而非 "_User"）
+    query.include('author');
+    
+    const diaries = await query.find();
+    renderDiaryList(diaries);
+    updateTagFilters(diaries);
+  } catch (error) {
+    console.error('加载日记失败:', error);
+    alert('加载日记失败: ' + error.message);
   }
+}
 
   // 渲染日记列表
   function renderDiaryList(diaries) {
@@ -317,4 +318,5 @@ diaryForm.addEventListener('submit', async function(e) {
   window.loadDiaryList = loadDiaryList;
 
 });
+
 
