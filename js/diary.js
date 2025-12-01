@@ -23,61 +23,62 @@ document.addEventListener('DOMContentLoaded', function() {
   });
 
   // 表单提交处理（保存/更新日记）
-  diaryForm.addEventListener('submit', async function(e) {
-    e.preventDefault();
-    
-    const diaryId = diaryIdInput.value;
-    const title = diaryTitleInput.value.trim();
-    const content = diaryContentInput.value.trim();
-    const tags = diaryTagsInput.value.split(',').map(tag => tag.trim()).filter(tag => tag);
-    const mood = diaryMoodSelect.value;
-    const weather = diaryWeatherSelect.value;
+diaryForm.addEventListener('submit', async function(e) {
+  e.preventDefault();
+  
+  const diaryId = diaryIdInput.value;
+  const title = diaryTitleInput.value.trim();
+  const content = diaryContentInput.value.trim();
+  const tags = diaryTagsInput.value.split(',').map(tag => tag.trim()).filter(tag => tag);
+  const mood = diaryMoodSelect.value;
+  const weather = diaryWeatherSelect.value;
 
-    // 表单验证
-    if (!title || !content) {
-      alert('标题和内容不能为空');
-      return;
-    }
+  // 表单验证
+  if (!title || !content) {
+    alert('标题和内容不能为空');
+    return;
+  }
 
-    try {
-      if (diaryId) {
-        // 更新现有日记
-        const diary = AV.Object.createWithoutData('Diary', diaryId);
-        diary.set('title', title);
-        diary.set('content', content);
-        diary.set('tags', tags);
-        diary.set('mood', mood);
-        diary.set('weather', weather);
-        await diary.save();
-        alert('日记更新成功！');
-      } else {
-       // 创建新日记
-const Diary = AV.Object.extend('Diary');
-const diary = new Diary();
-
-// 显式创建 Pointer，指定 className 为 "User"（首字母大写，不带下划线）
-const authorPointer = AV.Object.createWithoutData('User', AV.User.current().id);
-
-diary.set('title', title);
-diary.set('content', content);
-diary.set('tags', tags);
-diary.set('mood', mood);
-diary.set('weather', weather);
-diary.set('isPublic', false);
-diary.set('author', authorPointer); // 使用显式创建的 Pointer
-        
-        await diary.save();
-        alert('日记创建成功！');
-      }
+  try {
+    if (diaryId) {
+      // 更新现有日记
+      const diary = AV.Object.createWithoutData('Diary', diaryId);
+      diary.set('title', title);
+      diary.set('content', content);
+      diary.set('tags', tags);
+      diary.set('mood', mood);
+      diary.set('weather', weather);
+      await diary.save();
+      alert('日记更新成功！');
+    } else {
+      // 创建新日记（修复 Pointer 关联问题）
+      const Diary = AV.Object.extend('Diary');
+      const diary = new Diary();
       
-      // 关闭模态框并刷新列表
-      diaryModal.classList.add('hidden');
-      loadDiaryList();
-    } catch (error) {
-      console.error('保存日记失败:', error);
-      alert('保存日记失败: ' + error.message);
+      // 关键修复：显式创建 User 类型的 Pointer（className 必须是 "User"）
+      const currentUser = AV.User.current();
+      const authorPointer = AV.Object.createWithoutData('User', currentUser.id);
+      
+      diary.set('title', title);
+      diary.set('content', content);
+      diary.set('tags', tags);
+      diary.set('mood', mood);
+      diary.set('weather', weather);
+      diary.set('isPublic', false);
+      diary.set('author', authorPointer); // 关联正确的 User Pointer
+      
+      await diary.save();
+      alert('日记创建成功！');
     }
-  });
+    
+    // 关闭模态框并刷新列表
+    diaryModal.classList.add('hidden');
+    loadDiaryList();
+  } catch (error) {
+    console.error('保存日记失败:', error);
+    alert('保存日记失败: ' + error.message);
+  }
+});
 
   // 加载日记列表
   async function loadDiaryList(filters = {}) {
@@ -316,3 +317,4 @@ diary.set('author', authorPointer); // 使用显式创建的 Pointer
   window.loadDiaryList = loadDiaryList;
 
 });
+
